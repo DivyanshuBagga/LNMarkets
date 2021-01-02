@@ -5,6 +5,7 @@ This is a Python wrapper for [LNMarkets](https://lnmarkets.com/) API.
 To install: `pip install LNMarkets`
 
 Documentation: `help(LNMarkets)`
+To access documentation on idividual module, eg User: `help(LNMarkets.User)`
 
 Example Usage:
 ```python
