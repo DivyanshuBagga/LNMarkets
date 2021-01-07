@@ -78,15 +78,61 @@ def createPosition(token, type, side, leverage, margin=None, quantity=None, stop
         raise RuntimeError('Unable to create position: %s' % positionData.text)
 
 def buy(token, leverage, margin=None, quantity=None, stoploss=None, takeprofit=None):
+    """
+    Send the buy order. You can choose to use the margin or the quantity as a parameter, the other will be calculated with the one you choosed.
+
+    Parameters-
+    token: Authentication token.
+    leverage: Leverage of the order.
+    margin: margin or quantity must be given (optional)
+    quantity: margin or quantity must be given (optional)
+    stoploss: StopLoss level. (optional)
+    takeprofit: Profit taking level. (optional)
+    """
     return createPosition(token,"m","b",leverage,margin,quantity,stoploss,takeprofit)
 
 def sell(token, leverage, margin=None, quantity=None, stoploss=None, takeprofit=None):
+    """
+    Send the sell order. You can choose to use the margin or the quantity as a parameter, the other will be calculated with the one you choosed.
+
+    Parameters-
+    token: Authentication token.
+    leverage: Leverage of the order.
+    margin: margin or quantity must be given (optional)
+    quantity: margin or quantity must be given (optional)
+    stoploss: StopLoss level. (optional)
+    takeprofit: Profit taking level. (optional)
+    """
     return createPosition(token,"m","s",leverage,margin,quantity,stoploss,takeprofit)
 
 def limitBuy(token, leverage, price, margin=None, quantity=None, stoploss=None, takeprofit=None):
+    """
+    Send the limit buy order. You can choose to use the margin or the quantity as a parameter, the other will be calculated with the one you choosed.
+
+    Parameters-
+    token: Authentication token.
+    leverage: Leverage of the order.
+    price: Limit price of order.
+    margin: margin or quantity must be given (optional)
+    quantity: margin or quantity must be given (optional)
+    stoploss: StopLoss level. (optional)
+    takeprofit: Profit taking level. (optional)
+    """
     return createPosition(token,"l","b",leverage,margin,quantity,stoploss,takeprofit,price)
 
 def limitSell(token, leverage, price, margin=None, quantity=None, stoploss=None, takeprofit=None):
+    """
+    Send the limit sell order. You can choose to use the margin or the quantity as a parameter, the other will be calculated with the one you choosed.
+
+    Parameters-
+    token: Authentication token.
+    leverage: Leverage of the order.
+    price: Limit price of order.
+    margin: margin or quantity must be given (optional)
+    quantity: margin or quantity must be given (optional)
+    stoploss: StopLoss level. (optional)
+    takeprofit: Profit taking level. (optional)
+    """
     return createPosition(token,"l","s",leverage,margin,quantity,stoploss,takeprofit,price)
 
 def updatePosition(token, pid, type, value):
@@ -140,10 +186,10 @@ def closeAllLongs(token):
     token: Authentication token.
     """   
 
-    positionData = getPositions(token, "open")
+    positionData = getPositions(token, "open")['open']
     pl = 0.0
     for position in positionData:
-        if position['side'] == "b":
+        if position['side'] == "b" and not position['closed'] and not position['canceled']:
             closeData = closePosition(token, position['pid'])
             pl += float(closeData['pl'])
 
@@ -157,10 +203,10 @@ def closeAllShorts(token):
     token: Authentication token.
     """   
     
-    positionData = getPositions(token, "open")
+    positionData = getPositions(token, "open")['open']
     pl = 0.0
     for position in positionData:
-        if position['side'] == "s":
+        if position['side'] == "s" and not position['closed'] and not position['canceled']:
             closeData = closePosition(token, position['pid'])
             pl += float(closeData['pl'])
 

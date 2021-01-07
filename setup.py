@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setup(
     name='LNMarkets',
     packages=find_packages(include=['LNMarkets']),
-    version='0.1.0',
+    version='0.1.1',
     description='LNMarkets API Wrapper',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -18,6 +18,6 @@ setup(
     setup_requires=['pytest-runner'],
     tests_require=['pytest==4.4.1'],
     test_suite='tests',
-    download_url = 'https://github.com/DivyanshuBagga/LNMarkets/archive/0.1.0.tar.gz',
+    download_url = 'https://github.com/DivyanshuBagga/LNMarkets/archive/0.1.1.tar.gz',
     keywords = ['Bitcoin','Finance','Trading'],
 )
