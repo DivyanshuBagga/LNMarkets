@@ -296,7 +296,7 @@ def cashin(token, pid, amount):
         'authorization': "Bearer %s" % token
     }
     payload = "{\"amount\":%d,\"pid\":\"%s\"}" % (amount,pid)
-    positionData = requests.post(APIUrls.lnapi+APIUrls.cashinnUrl,data=payload,headers=headers)
+    positionData = requests.post(APIUrls.lnapi+APIUrls.cashinUrl,data=payload,headers=headers)
     if positionData.status_code == 200:
         return positionData.json()
     else:
