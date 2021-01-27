@@ -1,8 +1,10 @@
 
 import requests
+import json
 from . import APIUrls
 
-def userInformation(token):    
+
+def userInformation(token):
     """
     Get the user account Information.
 
@@ -10,14 +12,21 @@ def userInformation(token):
     token: Authentication token.
     """
     headers = {
-    'accept': "application/json",
-    'authorization': "Bearer %s" % token
+        'accept': "application/json",
+        'authorization': f"Bearer {token}",
     }
-    userInfo = requests.get(APIUrls.lnapi+APIUrls.userUrl,headers=headers)
+    userInfo = requests.get(
+        APIUrls.lnapi+APIUrls.userUrl,
+        headers=headers,
+    )
     if userInfo.status_code == 200:
         return userInfo.json()
     else:
-        raise RuntimeError('Unable to get user information: %s' % userInfo.text)
+        raise RuntimeError(
+            'Unable to get user information:\n'
+            f'{userInfo.text}'
+        )
+
 
 def getBalance(token):
     """
@@ -26,49 +35,46 @@ def getBalance(token):
     Parameters-
     token: Authentication token.
     """
-    
+
     return userInformation(token)['balance']
 
-def updateUser(token, leaderboard = None, showUsername = None, username = None):    
+
+def updateUser(token, leaderboard=None, showUsername=None, username=None):
     """
     Update user account information.
 
     Parameters-
     token: Authentication token.
-    leaderboard: True, if allowed to show user's profit on leaderboard.
-    showUsername: True, if allowed to show the username on LN Marktes public data.
+    leaderboard: True to show user's profit on leaderboard.
+    showUsername: True to show the username on LN Marktes public data.
     username: username to display.
     """
 
     headers = {
-    'content-type': "application/json",        
-    'accept': "application/json",
-    'authorization': "Bearer %s" % token
+        'content-type': "application/json",
+        'accept': "application/json",
+        'authorization': f"Bearer {token}",
     }
-    payload = "{"
-    comma = False
-    if showUsername != None:
-        payload += "\"show_username\":%s" % str(showUsername).lower()
-        comma = True
-    if leaderboard != None:
-        if comma:
-            payload += ",\"show_leaderboard\":%s" % str(leaderboard).lower()
-        else:
-            payload += "\"show_leaderboard\":%s" % str(leaderboard).lower()
-        comma = True
-    if username == None:
-        payload += "}"
-    else:
-        if comma:
-            payload += ",\"username\":\"%s\"}" % username
-        else:
-            payload += "\"username\":\"%s\"}" % username
-
-    userInfo = requests.put(APIUrls.lnapi+APIUrls.userUrl,data=payload,headers=headers)
+    payloadDict = dict()
+    if showUsername is not None:
+        payloadDict['show_username'] = showUsername
+    if leaderboard is not None:
+        payloadDict['show_leaderboard'] = leaderboard
+    if username is not None:
+        payloadDict['username'] = username
+    payload = json.dumps(payloadDict)
+    userInfo = requests.put(
+        APIUrls.lnapi+APIUrls.userUrl,
+        data=payload,
+        headers=headers,
+    )
     if userInfo.status_code == 200:
         return userInfo.json()
     else:
-        raise RuntimeError('Unable to update user information: %s' % userInfo.text)
+        raise RuntimeError(
+            'Unable to update user information:\n'
+            f'{userInfo.text}'
+            )
 
 
 def updatePassword(token, previousPassword, newPassword):
@@ -80,16 +86,26 @@ def updatePassword(token, previousPassword, newPassword):
     previousPassword: Previous Password.
     newPassword: New Password.
     """
-    headers = {
-    'content-type': "application/json",        
-    'authorization': "Bearer %s" % token
-    }
-    payload="{\"previousPassword\":\"%s\",\"newPassword\":\"%s\"}" %(previousPassword,newPassword)
 
-    updateInfo = requests.put(APIUrls.lnapi+APIUrls.updateUrl,data=payload,headers=headers)
+    headers = {
+        'content-type': "application/json",
+        'authorization': f"Bearer {token}",
+    }
+    payload = json.dumps({
+        'previousPassword': previousPassword,
+        'newPassword': newPassword,
+        })
+
+    updateInfo = requests.put(
+        APIUrls.lnapi+APIUrls.updateUrl,
+        data=payload,
+        headers=headers,
+    )
     return updateInfo.ok
 
-def getTransactions(token, type, nbitem=-1, index=1, getLength=False, start=None, end=None):    
+
+def getTransactions(token, type, nbitem=-1, index=1, getLength=False,
+                    start=None, end=None):
     """
     Retrieves all withdraw or deposit you did with LN Markets or just one page
 
@@ -104,38 +120,56 @@ def getTransactions(token, type, nbitem=-1, index=1, getLength=False, start=None
     """
 
     headers = {
-    'accept': "application/json",
-    'authorization': "Bearer %s" % token
+        'accept': "application/json",
+        'authorization': "Bearer {token}",
     }
-    params = { "type": type, "getLength": str(getLength).lower()}
+    params = {
+        "type": type,
+        "getLength": str(getLength).lower()
+    }
     if nbitem != -1:
         params['nbitem'] = nbitem
         params['index'] = index
-    if start != None:
+    if start is not None:
         params['start'] = start
-    if end != None:
+    if end is not None:
         params['end'] = end
-        
-    transactions = requests.get(APIUrls.lnapi+APIUrls.userHistoryUrl,headers=headers,params=params)
+
+    transactions = requests.get(
+        APIUrls.lnapi+APIUrls.userHistoryUrl,
+        headers=headers,
+        params=params,
+    )
     if transactions.status_code == 200:
         return transactions.json()
     else:
-        raise RuntimeError('Unable to get user transactions: %s' % transactions.text)
+        raise RuntimeError(
+            'Unable to get user transactions:\n'
+            f'{transactions.text}'
+        )
+
 
 def getTokens():
     """
     Retrieves the list of active JSON Web Token user currently holds.
     """
-    
+
     headers = {
-    'accept': "application/json"
+        'accept': "application/json",
     }
-        
-    tokens = requests.get(APIUrls.lnapi+APIUrls.tokenUrl,headers=headers)
+
+    tokens = requests.get(
+        APIUrls.lnapi+APIUrls.tokenUrl,
+        headers=headers,
+    )
     if tokens.status_code == 200:
         return tokens.json()
     else:
-        raise RuntimeError('Unable to get user tokens: %s' % tokens.text)
+        raise RuntimeError(
+            'Unable to get user tokens:\n'
+            f'{tokens.text}'
+        )
+
 
 def revokeToken(token=None):
     """
@@ -144,20 +178,33 @@ def revokeToken(token=None):
     Parameters-
     token: Identifier of Token to be removed (optional)
     """
-    
-    if token == None:   
-        tokenInfo = requests.delete(APIUrls.lnapi+tokenUrl)
+
+    if token is None:
+        tokenInfo = requests.delete(
+            APIUrls.lnapi + APIUrls.tokenUrl,
+        )
     else:
-        params = {"jti": token}
-        tokenInfo = requests.delete(APIUrls.lnapi+APIUrls.tokenUrl,params=params)        
+        params = {
+            "jti": token,
+        }
+        tokenInfo = requests.delete(
+            APIUrls.lnapi+APIUrls.tokenUrl,
+            params=params,
+        )
     if tokenInfo.status_code == 200:
         return True
     else:
-        raise RuntimeError('Unable to revoke user token: %s' % tokenInfo.text)
+        raise RuntimeError(
+            'Unable to revoke user tokens:\n'
+            f'{tokenInfo.text}'
+        )
 
-def generateToken(expiry,deposit=False,withdraw=False,positions=False,user=False):
+
+def generateToken(expiry, deposit=False, withdraw=False, positions=False,
+                  user=False):
     """
-    Using the given scopes, generate token to give access to different parts of the public API.
+    Using the given scopes, generate token to give access to different parts
+    of the public API.
 
     Parameters-
     expiry: token expiry in seconds.
@@ -169,38 +216,36 @@ def generateToken(expiry,deposit=False,withdraw=False,positions=False,user=False
 
     headers = {
         'content-type': "application/json",
-        'accept': "application/json"
+        'accept': "application/json",
     }
-
-    payload = "{\"expiry\":%d,\"scopes\":[" % expiry
-    putComma = False
+    scopes = []
     if deposit:
-        if putComma:
-            payload+=","
-        payload+="\"deposit\""
-        putComma=True
+        scopes += "deposit"
     if withdraw:
-        if putComma:
-            payload+=","
-        payload+="\"withdraw\""
-        putComma=True
+        scopes += "withdraw"
     if positions:
-        if putComma:
-            payload+=","
-        payload+="\"positions\""
-        putComma=True
+        scopes += "positions"
     if user:
-        if putComma:
-            payload+=","
-        payload+="\"user\""
-        putComma=True
-    payload+="]}"
-    
-    tokenInfo = requests.post(APIUrls.lnapi+APIUrls.tokenUrl,data=payload,headers=headers)        
+        scopes += "user"
+    payloadDict = {
+        'expiry': expiry,
+        'scopes': scopes,
+        }
+    payload = json.dumps(payloadDict)
+
+    tokenInfo = requests.post(
+        APIUrls.lnapi+APIUrls.tokenUrl,
+        data=payload,
+        headers=headers,
+    )
     if tokenInfo.status_code == 200:
         return tokenInfo.json()['token']
     else:
-        raise RuntimeError('Unable to generate user token: %s' % tokenInfo.text)
+        raise RuntimeError(
+            'Unable to generate user tokens:\n'
+            f'{tokenInfo.text}'
+        )
+
 
 def deposit(token, amount, unit="sat"):
     """
@@ -215,23 +260,35 @@ def deposit(token, amount, unit="sat"):
     paymentRequest: Invoice to pay to add balanceto the account
     expiry: time in seconds before expiry of request
     """
-    
+
     headers = {
         'content-type': "application/json",
         'accept': "application/json",
-        'authorization': "Bearer %s" % token
+        'authorization': f"Bearer {token}",
     }
-    payload = "{\"amount\":%d,\"unit\":\"%s\"}" % (amount, unit)
-    
-    invoice = requests.post(APIUrls.lnapi+APIUrls.depositUrl,data=payload,headers=headers)
+    payload = json.dumps({
+        'amount': amount,
+        'unit': unit,
+    })
+
+    invoice = requests.post(
+        APIUrls.lnapi+APIUrls.depositUrl,
+        data=payload,
+        headers=headers,
+    )
     if invoice.status_code == 200:
         return invoice.json()
     else:
-        raise RuntimeError('Unable to get invoice: %s' % invoice.text)
+        raise RuntimeError(
+            'Unable to get invoice:\n'
+            f'{invoice.text}'
+        )
+
 
 def withdrawInvoice(token, amount, invoice, unit="sat"):
     """
-    Move funds from the Lightning channel with LN Markets to user wallet by using an invoice directly.
+    Move funds from the Lightning channel with LN Markets to user wallet
+    by using an invoice directly.
 
     Parameters-
     token: Authentication token
@@ -245,23 +302,36 @@ def withdrawInvoice(token, amount, invoice, unit="sat"):
     paymentSecret: Payment secret of settled invoice
     paymentHash: Payment hash of settled invoice
     """
-    
+
     headers = {
         'content-type': "application/json",
         'accept': "application/json",
-        'authorization': "Bearer %s" % token
+        'authorization': f"Bearer {token}",
     }
-    payload = "{\"amount\":%d,\"unit\":\"%s\",\"invoice\":\"%s\"}" % (amount,unit,invoice)
-    
-    payment = requests.post(APIUrls.lnapi+APIUrls.withdrawUrl,data=payload,headers=headers)
+    payload = json.dumps({
+        'amount': amount,
+        'unit': unit,
+        'invoice': invoice,
+    })
+
+    payment = requests.post(
+        APIUrls.lnapi+APIUrls.withdrawUrl,
+        data=payload,
+        headers=headers,
+    )
     if payment.status_code == 200:
         return payment.json()
     else:
-        raise RuntimeError('Unable to make payment: %s' % payment.text)
+        raise RuntimeError(
+            'Unable to make payment:\n'
+            f'{payment.text}'
+        )
+
 
 def withdrawLNURL(token, amount, unit="sat"):
     """
-    Move funds from the Lightning channel with LN Markets to user wallet by using an LNURL.
+    Move funds from the Lightning channel with LN Markets to user wallet
+    by using an LNURL.
 
     Parameters-
     token: Authentication token
@@ -271,41 +341,62 @@ def withdrawLNURL(token, amount, unit="sat"):
     Returns-
     lnurl: LNURL BECH32 encoded string for wallet
     """
-    
+
     headers = {
         'content-type': "application/json",
         'accept': "application/json",
-        'authorization': "Bearer %s" % token
+        'authorization': "Bearer {token}",
     }
-    payload = "{\"amount\":%d,\"unit\":\"%s\"}" % (amount,unit)
-    
-    LNUrlInfo = requests.post(APIUrls.lnapi+APIUrls.withdrawLNUrl,data=payload,headers=headers)
+    payload = json.dumps({
+        'amount': amount,
+        'unit': unit,
+    })
+
+    LNUrlInfo = requests.post(
+        APIUrls.lnapi+APIUrls.withdrawLNUrl,
+        data=payload,
+        headers=headers,
+    )
     if LNUrlInfo.status_code == 200:
         return LNUrlInfo.json()
     else:
-        raise RuntimeError('Unable to create LNURL: %s' % LNUrlInfo.text)
-    
+        raise RuntimeError(
+            'Unable to create LNURL:\n'
+            f'{LNUrlInfo.text}'
+        )
+
+
 def login(username, password):
     """
     Use existing credentials to log in.
     """
-    
+
     headers = {
         'content-type': "application/json",
-        'accept': "application/json"
+        'accept': "application/json",
     }
-    payload = "{\"login\":\"%s\",\"password\":\"%s\"}" % (username,password)
-    loginResp = requests.post(APIUrls.lnapi+APIUrls.loginUrl,data=payload,headers=headers)
+    session = requests.Session()
+    payload = json.dumps({
+        'login': username,
+        'password': password,
+    })
+    loginResp = session.post(
+        APIUrls.lnapi+APIUrls.loginUrl,
+        data=payload,
+        headers=headers,
+    )
     if loginResp.status_code == 200:
-        return loginResp.json()
+        return session
     else:
-        raise RuntimeError('Unable to login: %s' % loginResp.text)
+        raise RuntimeError(
+            'Unable to login:\n'
+            f'{loginResp.text}'
+        )
 
-def logout():
+
+def logout(session):
     """
     Deletes session cookie
     """
 
-    return requests.post(APIUrls.lnapi+APIUrls.logoutUrl).ok
-
-    
+    return session.post(APIUrls.lnapi+APIUrls.logoutUrl).ok

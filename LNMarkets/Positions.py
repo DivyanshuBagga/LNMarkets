@@ -1,43 +1,56 @@
 
 import requests
+import json
 from . import APIUrls
 
-def getPositions(token, type = None):
+
+def getPositions(token, type_=None):
     """
     Retrieves either opened, closed or all positions.
 
     Parameters-
     token: Authentication token.
-    type: what kind of positions ('open' or 'closed' or 'all') to fetch (optional)
+    type_: kind of positions ('open' or 'closed' or 'all') to fetch (optional)
 
     """
-    
     headers = {
         'accept': "application/json",
-        'authorization': "Bearer %s" % token
+        'authorization': f"Bearer {token}",
     }
-    if type == None:
-        positionData = requests.get(APIUrls.lnapi+APIUrls.positionUrl,headers=headers)
+    if type_ is None:
+        positionData = requests.get(
+            APIUrls.lnapi+APIUrls.positionUrl,
+            headers=headers,
+        )
         if positionData.status_code == 200:
             return positionData.json()
         else:
             raise RuntimeError('Unable to get positions')
     else:
-        params = {"type":type}
-        positionData = requests.get(APIUrls.lnapi+APIUrls.positionUrl,params = params,headers=headers)
+        params = {"type": type_}
+        positionData = requests.get(
+            APIUrls.lnapi+APIUrls.positionUrl,
+            params=params,
+            headers=headers,
+        )
         if positionData.status_code == 200:
             return positionData.json()
         else:
-            raise RuntimeError('Unable to get positions: %s' % positionData.text)
+            raise RuntimeError(f'Unable to get positions: {positionData.text}')
 
 
-def createPosition(token, type, side, leverage, margin=None, quantity=None, stoploss=None, takeprofit=None, price=None):
+def createPosition(token, type_, side, leverage, margin=None, quantity=None,
+                   stoploss=None, takeprofit=None, price=None):
     """
-    Send the order form parameters to add a new position in database. If type="l", the property price must be included in the request to know when the position should be filled. You can choose to use the margin or the quantity as a parameter, the other will be calculated with the one you choosed.
+    Send the order form parameters to add a new position in database.
+    If type_="l", the property price must be included in the request to know
+    when the position should be filled. You can choose to use the margin or
+    the quantity as a parameter, the other will be calculated with the one
+    you selected.
 
     Parameters-
     token: Authentication token.
-    type: "l" for limit order, "m" for market order.
+    type_: "l" for limit order, "m" for market order.
     side: "b" for buy, "s" for sell.
     leverage: Leverage of the order.
     margin: margin or quantity must be given (optional)
@@ -46,54 +59,51 @@ def createPosition(token, type, side, leverage, margin=None, quantity=None, stop
     takeprofit: Profit taking level. (optional)
     price: limit price for limit order. (optional)
     """
-    if margin == None and quantity == None:
+    if margin is None and quantity is None:
         raise ValueError('Either margin or quantity must be provided')
-    if type == "l" and price == None:
+    if type_ == "l" and price is None:
         raise ValueError('Limit Price must be pprovided for limit order')
 
-    payload = "{\"type\":\"%s\",\"side\":\"%s\",\"leverage\":%.2f" %(type, side, leverage)
+    payloadDict = {
+        'type': type_,
+        'side': side,
+        'leverage': leverage,
+        }
 
-    if type == "l":
-        payload += ",\"price\":%.2f" % price
-    if margin == None:
-        payload += ",\"quantity\":%d" % quantity
+    if type_ == "l":
+        payloadDict['price'] = price
+    if margin is None:
+        payloadDict['quantity'] = quantity
     else:
-        payload += ",\"margin\":%d" % margin
-    if stoploss != None:
-        payload += ",\"stoploss\":%.2f" % stoploss
-    if takeprofit != None:
-        payload += ",\"takeprofit\":%.2f" % takeprofit
+        payloadDict['margin'] = margin
+    if stoploss is not None:
+        payloadDict['stoploss'] = stoploss
+    if takeprofit is not None:
+        payloadDict['takeprofit'] = takeprofit
 
-    payload += "}"        
-        
+    payload = json.dumps(payloadDict)
     headers = {
         'content-type': "application/json",
         'accept': "application/json",
-        'authorization': "Bearer %s" % token
+        'authorization': f"Bearer {token}",
     }
-    positionData = requests.post(APIUrls.lnapi+APIUrls.positionUrl,data=payload,headers=headers)
+    positionData = requests.post(
+        APIUrls.lnapi+APIUrls.positionUrl,
+        data=payload,
+        headers=headers,
+    )
     if positionData.status_code == 200:
         return positionData.json()
     else:
-        raise RuntimeError('Unable to create position: %s' % positionData.text)
+        raise RuntimeError(f'Unable to create position: {positionData.text}')
 
-def buy(token, leverage, margin=None, quantity=None, stoploss=None, takeprofit=None):
-    """
-    Send the buy order. You can choose to use the margin or the quantity as a parameter, the other will be calculated with the one you choosed.
 
-    Parameters-
-    token: Authentication token.
-    leverage: Leverage of the order.
-    margin: margin or quantity must be given (optional)
-    quantity: margin or quantity must be given (optional)
-    stoploss: StopLoss level. (optional)
-    takeprofit: Profit taking level. (optional)
+def buy(token, leverage, margin=None, quantity=None, stoploss=None,
+        takeprofit=None):
     """
-    return createPosition(token,"m","b",leverage,margin,quantity,stoploss,takeprofit)
-
-def sell(token, leverage, margin=None, quantity=None, stoploss=None, takeprofit=None):
-    """
-    Send the sell order. You can choose to use the margin or the quantity as a parameter, the other will be calculated with the one you choosed.
+    Send the buy order.
+    You can choose to use the margin or the quantity as a parameter,
+    the other will be calculated with the one you selected.
 
     Parameters-
     token: Authentication token.
@@ -103,11 +113,51 @@ def sell(token, leverage, margin=None, quantity=None, stoploss=None, takeprofit=
     stoploss: StopLoss level. (optional)
     takeprofit: Profit taking level. (optional)
     """
-    return createPosition(token,"m","s",leverage,margin,quantity,stoploss,takeprofit)
+    return createPosition(
+        token=token,
+        type_="m",
+        side="b",
+        leverage=leverage,
+        margin=margin,
+        quantity=quantity,
+        stoploss=stoploss,
+        takeprofit=takeprofit,
+    )
 
-def limitBuy(token, leverage, price, margin=None, quantity=None, stoploss=None, takeprofit=None):
+
+def sell(token, leverage, margin=None, quantity=None, stoploss=None,
+         takeprofit=None):
     """
-    Send the limit buy order. You can choose to use the margin or the quantity as a parameter, the other will be calculated with the one you choosed.
+    Send the sell order.
+    You can choose to use the margin or the quantity as a parameter,
+    the other will be calculated with the one you selected.
+
+    Parameters-
+    token: Authentication token.
+    leverage: Leverage of the order.
+    margin: margin or quantity must be given (optional)
+    quantity: margin or quantity must be given (optional)
+    stoploss: StopLoss level. (optional)
+    takeprofit: Profit taking level. (optional)
+    """
+    return createPosition(
+        token=token,
+        type_="m",
+        side="b",
+        leverage=leverage,
+        margin=margin,
+        quantity=quantity,
+        stoploss=stoploss,
+        takeprofit=takeprofit,
+    )
+
+
+def limitBuy(token, leverage, price, margin=None, quantity=None, stoploss=None,
+             takeprofit=None):
+    """
+    Send the limit buy order.
+    You can choose to use the margin or the quantity as a parameter,
+    the other will be calculated with the one you selected.
 
     Parameters-
     token: Authentication token.
@@ -118,11 +168,25 @@ def limitBuy(token, leverage, price, margin=None, quantity=None, stoploss=None, 
     stoploss: StopLoss level. (optional)
     takeprofit: Profit taking level. (optional)
     """
-    return createPosition(token,"l","b",leverage,margin,quantity,stoploss,takeprofit,price)
+    return createPosition(
+        token=token,
+        type_="l",
+        side="b",
+        leverage=leverage,
+        margin=margin,
+        quantity=quantity,
+        stoploss=stoploss,
+        takeprofit=takeprofit,
+        price=price,
+    )
 
-def limitSell(token, leverage, price, margin=None, quantity=None, stoploss=None, takeprofit=None):
+
+def limitSell(token, leverage, price, margin=None, quantity=None,
+              stoploss=None, takeprofit=None):
     """
-    Send the limit sell order. You can choose to use the margin or the quantity as a parameter, the other will be calculated with the one you choosed.
+    Send the limit sell order.
+    You can choose to use the margin or the quantity as a parameter,
+    the other will be calculated with the one you selected.
 
     Parameters-
     token: Authentication token.
@@ -133,11 +197,22 @@ def limitSell(token, leverage, price, margin=None, quantity=None, stoploss=None,
     stoploss: StopLoss level. (optional)
     takeprofit: Profit taking level. (optional)
     """
-    return createPosition(token,"l","s",leverage,margin,quantity,stoploss,takeprofit,price)
+    return createPosition(
+        token=token,
+        type_="l",
+        side="s",
+        leverage=leverage,
+        margin=margin,
+        quantity=quantity,
+        stoploss=stoploss,
+        takeprofit=takeprofit,
+        price=price,
+    )
 
-def updatePosition(token, pid, type, value):
+
+def updatePosition(token, pid, type_, value):
     """
-    Allows user to modify stoploss or takeprofit parameters of an existing position.
+     Modifies stoploss or takeprofit parameters of an existing position.
 
     Parameters-
     token: Authentication token.
@@ -146,71 +221,105 @@ def updatePosition(token, pid, type, value):
     value: Price level to set.
     """
 
-    payload = "{\"pid\":\"%s\",\"type\":\"%s\",\"value\":%.2f}" %(pid, type, value)
+    payload = json.dumps({
+        'pid': pid,
+        'type': type_,
+        'value': value,
+        })
     headers = {
         'content-type': "application/json",
         'accept': "application/json",
-        'authorization': "Bearer %s" % token
+        'authorization': f"Bearer {token}",
     }
-    positionData = requests.put(APIUrls.lnapi+APIUrls.positionUrl,data=payload,headers=headers)
+    positionData = requests.put(
+        APIUrls.lnapi+APIUrls.positionUrl,
+        data=payload,
+        headers=headers,
+    )
     if positionData.status_code == 200:
         return positionData.json()
     else:
-        raise RuntimeError('Unable to update position %s, reason: %s' % (pid,positionData.text))
+        raise RuntimeError(
+            f'Unable to update position {pid},\n'
+            f'reason: {positionData.text}'
+        )
+
 
 def closePosition(token, pid):
     """
-    Close the user position, the PL will be calculated against the current bid or offer depending on the side of the position.
- 
+    Close the user position,
+    the PL will be calculated against the current bid or offer
+    depending on the side of the position.
+
     Parameters-
     token: Authentication token.
     pid: ID of the position.
     """
 
-    params = {"pid": pid}
+    params = {
+        "pid": pid,
+    }
     headers = {
         'accept': "application/json",
-        'authorization': "Bearer %s" % token
+        'authorization': f"Bearer {token}",
     }
-    positionData = requests.delete(APIUrls.lnapi+APIUrls.positionUrl,params=params,headers=headers)
+    positionData = requests.delete(
+        APIUrls.lnapi+APIUrls.positionUrl,
+        params=params,
+        headers=headers,
+    )
     if positionData.status_code == 200:
         return positionData.json()
     else:
-        raise RuntimeError('Unable to close position %s, reason: %s' % (pid,positionData.text))
-        
+        raise RuntimeError(
+            f'Unable to close position {pid},\n'
+            f'reason: {positionData.text}'
+        )
+
+
 def closeAllLongs(token):
     """
     Close all positions on long side.
- 
+
     Parameters-
     token: Authentication token.
-    """   
+    """
 
     positionData = getPositions(token, "open")['open']
     pl = 0.0
     for position in positionData:
-        if position['side'] == "b" and not position['closed'] and not position['canceled']:
+        if (
+                position['side'] == "b" and
+                not position['closed'] and
+                not position['canceled']
+        ):
             closeData = closePosition(token, position['pid'])
             pl += float(closeData['pl'])
 
-    return pl;
+    return pl
+
 
 def closeAllShorts(token):
     """
     Close all positions on short side.
- 
+
     Parameters-
     token: Authentication token.
-    """   
-    
+    """
+
     positionData = getPositions(token, "open")['open']
     pl = 0.0
     for position in positionData:
-        if position['side'] == "s" and not position['closed'] and not position['canceled']:
+        if (
+                position['side'] == "s" and
+                not position['closed'] and
+                not position['canceled']
+        ):
             closeData = closePosition(token, position['pid'])
             pl += float(closeData['pl'])
 
-    return pl;
+    return pl
+
 
 def marginWithheld(openPositions):
     """
@@ -219,11 +328,13 @@ def marginWithheld(openPositions):
     Parameters-
     openPositions: Array of open positions.
     """
+
     totalMargin = 0.0
     for position in openPositions:
         totalMargin += float(position['margin'])
 
     return totalMargin
+
 
 def calculateProfit(positions):
     """
@@ -232,11 +343,13 @@ def calculateProfit(positions):
     Parameters-
     positions: Array of positions.
     """
+
     totalProfit = 0.0
     for position in positions:
         totalProfit += float(position['pl'])
 
     return totalProfit
+
 
 def realizedProfit(token):
     """
@@ -245,8 +358,10 @@ def realizedProfit(token):
     Parameters-
     token: Authentication token.
     """
-    closedPositions = getPositions(token,"closed")['closed']
+
+    closedPositions = getPositions(token, "closed")['closed']
     return calculateProfit(closedPositions)
+
 
 def unrealizedProfit(token):
     """
@@ -255,13 +370,15 @@ def unrealizedProfit(token):
     Parameters-
     token: Authentication token.
     """
-    openPositions = getPositions(token,"open")['open']
+
+    openPositions = getPositions(token, "open")['open']
     return calculateProfit(openPositions)
+
 
 def addMargin(token, pid, amount):
     """
     Adds margin to a running position.
- 
+
     Parameters-
     token: Authentication token.
     pid: ID of the position.
@@ -271,19 +388,30 @@ def addMargin(token, pid, amount):
     headers = {
         'content-type': "application/json",
         'accept': "application/json",
-        'authorization': "Bearer %s" % token
+        'authorization': f"Bearer {token}",
     }
-    payload = "{\"amount\":%d,\"pid\":\"%s\"}" % (amount,pid)
-    positionData = requests.post(APIUrls.lnapi+APIUrls.addMarginUrl,data=payload,headers=headers)
+    payload = json.dumps({
+        'amount': amount,
+        'pid': pid,
+        })
+    positionData = requests.post(
+        APIUrls.lnapi+APIUrls.addMarginUrl,
+        data=payload,
+        headers=headers,
+    )
     if positionData.status_code == 200:
         return positionData.json()
     else:
-        raise RuntimeError('Unable to add margin to position %s, reason: %s' % (pid,positionData.text))
+        raise RuntimeError(
+            f'Unable to add margin to position {pid},\n'
+            f'reason: {positionData.text}'
+        )
+
 
 def cashin(token, pid, amount):
     """
     Retrieves part of a running position's profit.
- 
+
     Parameters-
     token: Authentication token.
     pid: ID of the position.
@@ -293,19 +421,31 @@ def cashin(token, pid, amount):
     headers = {
         'content-type': "application/json",
         'accept': "application/json",
-        'authorization': "Bearer %s" % token
+        'authorization': f'Bearer {token}',
     }
-    payload = "{\"amount\":%d,\"pid\":\"%s\"}" % (amount,pid)
-    positionData = requests.post(APIUrls.lnapi+APIUrls.cashinnUrl,data=payload,headers=headers)
+    payload = json.dumps({
+        'amount': amount,
+        'pid': pid,
+        })
+    positionData = requests.post(
+        APIUrls.lnapi+APIUrls.cashinUrl,
+        data=payload,
+        headers=headers,
+    )
     if positionData.status_code == 200:
         return positionData.json()
     else:
-        raise RuntimeError('Unable to cash-in position %s, reason: %s' % (pid,positionData.text))
+        raise RuntimeError(
+            f'Unable to cash-in position {pid},\n'
+            f'reason: {positionData.text}'
+        )
+
 
 def cancelPosition(token, pid):
     """
-    Cancel the position linked to the given pid.Only works on positions that are not currently filled.
- 
+    Cancel the position linked to the given pid.
+    Only works on positions that are not currently filled.
+
     Parameters-
     token: Authentication token.
     pid: ID of the position.
@@ -314,12 +454,20 @@ def cancelPosition(token, pid):
     headers = {
         'content-type': "application/json",
         'accept': "application/json",
-        'authorization': "Bearer %s" % token
+        'authorization': f"Bearer {token}",
     }
-    payload = "{\"pid\":\"%s\"}" % pid
-    positionData = requests.post(APIUrls.lnapi+APIUrls.cancelUrl,data=payload,headers=headers)
+    payload = json.dumps({
+        'pid': pid,
+        })
+    positionData = requests.post(
+        APIUrls.lnapi+APIUrls.cancelUrl,
+        data=payload,
+        headers=headers,
+    )
     if positionData.status_code == 200:
         return positionData.json()
     else:
-        raise RuntimeError('Unable to cancel position %s, reason: %s' % (pid,positionData.text))
-    
+        raise RuntimeError(
+            f'Unable to cancel position {pid},\n'
+            f'reason: {positionData.text}'
+        )
