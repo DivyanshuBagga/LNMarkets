@@ -34,7 +34,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setup(
     name='LNMarkets',
     packages=find_packages(include=['LNMarkets']),
-    version='1.0.0',
+    version='1.3.0',
     description='LNMarkets API Wrapper',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -47,7 +47,7 @@ setup(
     tests_require=['pytest==4.4.1'],
     test_suite='tests',
     download_url='https://github.com/DivyanshuBagga/LNMarkets/archive/'
-    '1.0.0.tar.gz',
+    '1.3.0.tar.gz',
     keywords=['Bitcoin', 'Finance', 'Trading'],
     python_requires='>=3.6',
     cmdclass={

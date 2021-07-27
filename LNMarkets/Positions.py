@@ -143,7 +143,7 @@ def sell(token, leverage, margin=None, quantity=None, stoploss=None,
     return createPosition(
         token=token,
         type_="m",
-        side="b",
+        side="s",
         leverage=leverage,
         margin=margin,
         quantity=quantity,
