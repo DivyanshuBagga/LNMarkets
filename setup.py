@@ -34,7 +34,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setup(
     name='LNMarkets',
     packages=find_packages(include=['LNMarkets']),
-    version='1.3.0',
+    version='1.4.0',
     description='LNMarkets API Wrapper',
     long_description=long_description,
     long_description_content_type="text/markdown",

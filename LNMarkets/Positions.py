@@ -14,8 +14,8 @@ def getPositions(token, type_=None):
 
     """
     headers = {
-        'accept': "application/json",
-        'authorization': f"Bearer {token}",
+        'Accept': "application/json",
+        'Authorization': f"Bearer {token}",
     }
     if type_ is None:
         positionData = requests.get(
@@ -83,9 +83,9 @@ def createPosition(token, type_, side, leverage, margin=None, quantity=None,
 
     payload = json.dumps(payloadDict)
     headers = {
-        'content-type': "application/json",
-        'accept': "application/json",
-        'authorization': f"Bearer {token}",
+        'Content-Type': "application/json",
+        'Accept': "application/json",
+        'Authorization': f"Bearer {token}",
     }
     positionData = requests.post(
         APIUrls.lnapi+APIUrls.positionUrl,
@@ -227,9 +227,9 @@ def updatePosition(token, pid, type_, value):
         'value': value,
         })
     headers = {
-        'content-type': "application/json",
-        'accept': "application/json",
-        'authorization': f"Bearer {token}",
+        'Content-Type': "application/json",
+        'Accept': "application/json",
+        'Authorization': f"Bearer {token}",
     }
     positionData = requests.put(
         APIUrls.lnapi+APIUrls.positionUrl,
@@ -260,8 +260,8 @@ def closePosition(token, pid):
         "pid": pid,
     }
     headers = {
-        'accept': "application/json",
-        'authorization': f"Bearer {token}",
+        'Accept': "application/json",
+        'Authorization': f"Bearer {token}",
     }
     positionData = requests.delete(
         APIUrls.lnapi+APIUrls.positionUrl,
@@ -277,6 +277,23 @@ def closePosition(token, pid):
         )
 
 
+def isOpen(token, pid):
+    """
+    Checks if a position is open.
+
+    Parameters-
+    token: Authentication token.
+    pid: ID of the position.
+    """
+
+    positionData = getPositions(token, "running")
+    for position in positionData:
+        if (position['pid'] == pid):
+            return True
+
+    return False
+
+
 def closeAllLongs(token):
     """
     Close all positions on long side.
@@ -285,7 +302,7 @@ def closeAllLongs(token):
     token: Authentication token.
     """
 
-    positionData = getPositions(token, "open")['open']
+    positionData = getPositions(token, "running")
     pl = 0.0
     for position in positionData:
         if (
@@ -307,7 +324,7 @@ def closeAllShorts(token):
     token: Authentication token.
     """
 
-    positionData = getPositions(token, "open")['open']
+    positionData = getPositions(token, "running")
     pl = 0.0
     for position in positionData:
         if (
@@ -317,6 +334,33 @@ def closeAllShorts(token):
         ):
             closeData = closePosition(token, position['pid'])
             pl += float(closeData['pl'])
+
+    return pl
+
+
+def closeAll(token):
+    """
+    Close all positions.
+
+    Parameters-
+    token: Authentication token.
+    """
+
+    headers = {
+        'Accept': "application/json",
+        'Authorization': f"Bearer {token}",
+    }
+    positionData = requests.delete(
+        APIUrls.lnapi+APIUrls.closeAllUrl,
+        headers=headers,
+    )
+    if positionData.status_code == 200:
+        return positionData.json()['pl']
+    else:
+        raise RuntimeError(
+            f'Unable to close all positions.\n'
+            f'reason: {positionData.text}'
+        )
 
     return pl
 
@@ -359,7 +403,7 @@ def realizedProfit(token):
     token: Authentication token.
     """
 
-    closedPositions = getPositions(token, "closed")['closed']
+    closedPositions = getPositions(token, "closed")
     return calculateProfit(closedPositions)
 
 
@@ -371,7 +415,7 @@ def unrealizedProfit(token):
     token: Authentication token.
     """
 
-    openPositions = getPositions(token, "open")['open']
+    openPositions = getPositions(token, "running")
     return calculateProfit(openPositions)
 
 
@@ -386,9 +430,9 @@ def addMargin(token, pid, amount):
     """
 
     headers = {
-        'content-type': "application/json",
-        'accept': "application/json",
-        'authorization': f"Bearer {token}",
+        'Content-Type': "application/json",
+        'Accept': "application/json",
+        'Authorization': f"Bearer {token}",
     }
     payload = json.dumps({
         'amount': amount,
@@ -419,9 +463,9 @@ def cashin(token, pid, amount):
     """
 
     headers = {
-        'content-type': "application/json",
-        'accept': "application/json",
-        'authorization': f'Bearer {token}',
+        'Content-Type': "application/json",
+        'Accept': "application/json",
+        'Authorization': f'Bearer {token}',
     }
     payload = json.dumps({
         'amount': amount,
@@ -452,9 +496,9 @@ def cancelPosition(token, pid):
     """
 
     headers = {
-        'content-type': "application/json",
-        'accept': "application/json",
-        'authorization': f"Bearer {token}",
+        'Content-Type': "application/json",
+        'Accept': "application/json",
+        'Authorization': f"Bearer {token}",
     }
     payload = json.dumps({
         'pid': pid,

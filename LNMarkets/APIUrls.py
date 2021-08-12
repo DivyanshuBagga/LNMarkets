@@ -1,5 +1,5 @@
 
-lnapi = 'https://api.lnmarkets.com'
+lnapi = 'https://api.lnmarkets.com/v1'
 
 # User
 userUrl = '/user'
@@ -9,14 +9,15 @@ tokenUrl = '/user/jwt'
 depositUrl = '/user/deposit'
 withdrawUrl = '/user/withdraw'
 withdrawLNUrl = '/user/withdraw/lnurl'
-loginUrl = '/login/credentials'
+loginUrl = '/login/token'
 logoutUrl = '/user/logout'
 
 #Positions
-positionUrl = '/positions'
-addMarginUrl = '/positions/add-margin'
-cashinUrl = '/positions/cash-in'
-cancelUrl = '/positions/cancel'
+positionUrl = '/futures'
+addMarginUrl = '/futures/add-margin'
+cashinUrl = '/futures/cash-in'
+cancelUrl = '/futures/cancel'
+closeAllUrl = '/futures/all/close'
 
 #State
 stateUrl = '/state'

@@ -366,19 +366,21 @@ def withdrawLNURL(token, amount, unit="sat"):
         )
 
 
-def login(username, password):
+def login(token):
     """
     Use existing credentials to log in.
     """
 
     headers = {
-        'content-type': "application/json",
-        'accept': "application/json",
+        'Content-Type': "application/json",
+        'Accept': "application/json",
     }
     session = requests.Session()
     payload = json.dumps({
-        'login': username,
-        'password': password,
+        'type': "object",
+        'additionalProperties': False,
+        'required': [token],
+        'properties': {"token": {"type": "string"}}
     })
     loginResp = session.post(
         APIUrls.lnapi+APIUrls.loginUrl,
